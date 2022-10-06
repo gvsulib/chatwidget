@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta charset='utf-8'>
+
+	<title>Get Help from the University Libraries</title>
+
+</head>
+<body>
+
+	<div id="la-modal">
+	      
+		<form action="" method="post" id="la-help" class="lib-form">
+
+		<h1>Chat with the Library</h1>
+
+
+		<label for="question">How can we help you?</label>
+		<textarea name="question" id="question" required="required"></textarea>
+
+		<ul id="results" aria-live="polite" role="listbox">
+		</ul>
+		
+		<input type="submit" class="lib-button-small" value="Search the Knowledge Base">
+
+		<h2 tabindex="0">Or call or text us:</h2>
+			<ul class="contact">
+				<li>Text: <a href="sms:6168180219" aria-label="Text us at 616 818 0219">616-818-0219</a></li>
+				<li>Phone: <a href="tel:6163313500" aria-label="Call us at 616 331 3500">616-331-3500</a></li>
+
+			</ul>
+			<p><a href="https://www.gvsu.edu/library/hours">Library Hours</a></p>
+			<hr />
+			<h2>Having a technical issue?</h2> 
+			<p><a id="problem-link" href="https://www.gvsu.edu/library/support">Report a problem with the page you were on</a>.</p>
+		
+		</form>   
+		
+	</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+   // Search LA API when question is asked  
+
+   // set variables
+   var chatOnline, submitUrl;
+
+	$(function () {
+	    var minlength = 3;
+
+	    $("#question").keyup(function () {
+	        var that = this,
+	        value = $(this).val();
+
+	        if (value.length >= minlength ) {
+	            $.ajax({
+	                type: "GET",
+	                url: "https://help.library.gvsu.edu/api/1.0/search/" + value,
+	                data: {
+	                    'iid' : 1050,
+	                    'callback' : 'localJsonpCallback',
+						'limit' : 5
+	                },
+	                dataType: "jsonp"
+	                
+	            });
+	        }
+	    });
+	}); 
+
+	function getChatStatus() {
+		chatId = 1043;
+		$.ajax({
+			type: "GET",
+	        url: "https://api2.libanswers.com/1.0/chat/widgets/status/" + chatId,
+	        //crossDomain: true,
+	        dataType: "json",
+	        success: function(json) {
+	            chatOnline = json.online;
+	            //chatOnline = false; 	
+	            if(chatOnline == false) {
+	                console.log('Chat is offline');
+	                $('#la-help').submit(function(e) {
+	                	var searchValue = $('#question').val();
+	                	console.log('Clicked Knowledge Base Link');
+						// Trick the form into searching the knowledge base if you hit submit
+						 e.preventDefault();
+  						window.location.href = 'https://help.library.gvsu.edu/search/?q=' + encodeURIComponent(searchValue);  
+					});
+	            } else { // online
+	                console.log('Chat is online');
+	                // Direct the form to the chat button instead of the contact form in LA
+	                console.log('Changing the id of the form to indicate chat is online');
+	                $('.lib-form').attr('action',submitUrl).attr('id','la-chat');
+	                console.log('Changing the label of the form to reflect chat and not search');
+	                $('.lib-form').find('input[type="submit"]').val('Ask Question').attr('id','lib-chat-button');
+	                $('#la-chat').submit(function(e) {
+						// Trick the form into starting a chat if you hit submit
+						e.preventDefault();
+						var searchValue = $('#question').val();
+						console.log('Clicked chat button');
+						window.location.href = 'https://v2.libanswers.com/widget_chat.php?hash=6290b3d40228a9e708fa7066d01f56bf&question=' + encodeURIComponent(searchValue);  		
+						   				
+	                });
+	            }
+	        }
+	    });
+	}
+
+	function localJsonpCallback(json) {
+		var q = json.search.results;
+		if(q.length > 0) {
+			$('ul#results').html('<li><h4 tabindex="0">Are any of these helpful?</h4></li>');
+			$.each(q, function () {
+				$('ul#results').append('<li class="kb-links" id="answer-' + this.id + '"><a href="' + this.url + '" role="option">' + this.question + '</a></li>');
+
+				// Change the button label
+				console.log('Changing the button text');
+				if(chatOnline == false) {
+					$('input[type="submit"]').val('Skip and search the Knowledge Base');
+				} else {
+					$('input[type="submit"]').val('Skip and ask question');
+				}
+
+				// Show me all the responses
+       			console.log(this.question);
+       			console.log(this.url);
+       			console.log(this.topics[0]);
+    		});
+		}
+	}  
+   // Change routing of button if chat is online or not
+
+   getChatStatus();
+
+</script>
+
+<style>
+	h1, h2 { padding: 0; margin: 0; font-size:100%;}
+	body { background-color: #0065a4;}
+	.lib-form { width: 96%; max-width: 20em; margin: 0 auto; font-family: Arial,sans-serif; padding: 1em 2%; background-color: #fff;/*height:390px;*/}
+	.lib-form label { font-weight: bold; display: block;}
+	.lib-form textarea { border: 1px solid #ddd; padding: .5em 1%; width: 96%; margin: .5em auto;}
+	ul#results { list-style: none; padding: 0; margin: 0; margin-bottom: 1.5em;}
+	ul#results h4 { border-bottom: 1px solid #ddd; margin-bottom: .5em;}
+	input[type="submit"] {display: inline-block; margin-bottom: 0; font-weight: 400; text-align: center; vertical-align: middle; cursor: pointer; background-image: none; border: 1px solid transparent; white-space: nowrap; padding: 6px 12px; font-size: 14px; line-height: 1.428571429; border-radius: 4px; -webkit-appearance: none; -moz-appearance: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -o-user-select: none; user-select: none; text-decoration: none; color: #fff; background-color: #428bca; border-color: #357ebd; } 
+	ul#results li { line-height: 1.75em;}
+	p.other-tips {color: #575757;font-size: .85em;margin-top: 2em; line-height:1.5em;}
+	h1 { color: #fff; background-color: #0065a4; font-size: 1.25em; text-align: center;padding: .5em; margin-bottom: 1.25em; }
+	h2 { color: #000; font-size: 1em; margin-top:1.5em; }
+	ul.contact {list-style:none;margin:0;padding:0;color:#000;margin-top:.75em;}
+	ul.contact li {padding:0;margin-bottom:.4em;display: inline-block;}
+	ul.contact li:first-child { margin-right: 4%; }
+	.alert { padding: 15px;margin-bottom: 20px;border: 1px solid transparent;border-radius: 4px;}
+	.alert-info {color: #31708f;background-color: #d9edf7;border-color: #bce8f1;}
+	@media screen and (min-width: 400px) {
+		.lib-form { width: 94%; padding: 1.5em 2%; max-width: 25em;}
+		ul.contact li:first-child { margin-right:2em; }
+	}
+</style>
+
+</body>
+</html>
