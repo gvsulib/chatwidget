@@ -73,7 +73,7 @@
 		chatId = 1043;
 		$.ajax({
 			type: "GET",
-	        url: "https://api2.libanswers.com/1.0/chat/widgets/status/" + chatId,
+	        url: "https://help.library.gvsu.edu/1.0/chat/widgets/status/" + chatId,
 	        //crossDomain: true,
 	        dataType: "json",
 	        success: function(json) {
@@ -100,7 +100,7 @@
 						e.preventDefault();
 						var searchValue = $('#question').val();
 						console.log('Clicked chat button');
-						window.location.href = 'https://v2.libanswers.com/widget_chat.php?hash=6290b3d40228a9e708fa7066d01f56bf&question=' + encodeURIComponent(searchValue);  		
+						window.location.href = 'https://help.library.gvsu.edu/load_chat.php?hash=6290b3d40228a9e708fa7066d01f56bf&question=' + encodeURIComponent(searchValue);  		
 						   				
 	                });
 	            }
